@@ -1,0 +1,1551 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Admin Kopi Senja</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts (Plus Jakarta Sans) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    /* Sembunyikan Scrollbar secara estetik */
+    .scrollbar-none::-webkit-scrollbar {
+      display: none;
+    }
+
+    .scrollbar-none {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    @keyframes bounce-short {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-4px);
+      }
+    }
+
+    .animate-bounce-short {
+      animation: bounce-short 2s infinite;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.35s ease-out forwards;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+
+      #print-section,
+      #print-section * {
+        visibility: visible;
+      }
+
+      #print-section {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none;
+        border: none;
+      }
+    }
+  </style>
+  <style>
+    /* Sidebar visual tweaks */
+    .main-nav {
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .main-nav .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 0.9rem;
+      border-radius: 0.6rem;
+      cursor: pointer;
+      transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+    }
+
+    .main-nav .nav-btn i {
+      min-width: 1.25rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (min-width: 768px) {
+      .main-nav {
+        flex-direction: column;
+      }
+
+      .main-nav .nav-btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- HEADER UTAMA -->
+  <header
+    class="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm px-4 py-3 md:px-8 flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <div class="bg-amber-600 text-white p-2.5 rounded-xl shadow-lg shadow-amber-600/20">
+        <i data-lucide="coffee" class="w-6 h-6"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-slate-900 tracking-tight">Kopi Senja</h1>
+        <p class="text-xs text-slate-500 font-medium">Sistem Pengelola Menu & QR Mandiri</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <!-- Notifikasi Pesanan Baru -->
+      <button onclick="switchTab('orders')" id="btn-notif-orders"
+        class="relative bg-rose-50 hover:bg-rose-100 text-rose-600 px-3.5 py-1.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition duration-200 hidden">
+        <i data-lucide="bell" class="w-4 h-4 animate-bounce"></i>
+        <span class="hidden md:inline">Pesanan Masuk</span>
+        <span id="badge-notif-count"
+          class="bg-rose-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span>
+      </button>
+
+      <div class="flex items-center gap-2 text-xs bg-slate-100 py-1.5 px-3 rounded-xl border border-slate-200">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="font-bold text-slate-600">Sistem Online</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- POPUP NOTIFIKASI CUSTOM (TOAST) -->
+  <div id="toast"
+    class="fixed top-20 right-4 z-50 transform translate-y-[-20px] opacity-0 pointer-events-none transition-all duration-300">
+    <div id="toast-bg" class="flex items-center gap-3 px-5 py-3 rounded-xl shadow-xl border bg-white">
+      <div id="toast-icon-box" class="p-1 rounded-full"></div>
+      <p id="toast-text" class="text-sm font-semibold"></p>
+    </div>
+  </div>
+
+  <!-- LAYOUT UTAMA: SIDEBAR + KONTEN -->
+  <div class="flex-1 flex flex-col md:flex-row">
+
+    <!-- NAVIGATION SIDEBAR -->
+    <nav
+      class="main-nav w-full md:w-64 bg-white border-r border-slate-200 p-4 flex flex-row md:flex-col gap-1.5 overflow-x-auto md:overflow-x-visible sticky top-[61px] md:h-[calc(100vh-61px)] z-20 scrollbar-none">
+      <div class="hidden md:block px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+        Menu Utama
+      </div>
+
+      <button onclick="switchTab('dashboard')" id="nav-dashboard"
+        class="nav-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 whitespace-nowrap bg-amber-50 text-amber-800 shadow-xs">
+        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+        <span>Dasbor Ringkasan</span>
+      </button>
+
+      <button onclick="switchTab('list-menu')" id="nav-list-menu"
+        class="nav-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 whitespace-nowrap text-slate-600 hover:bg-slate-50 hover:text-slate-950">
+        <i data-lucide="utensils" class="w-5 h-5"></i>
+        <span>Kelola Menu Cafe</span>
+      </button>
+
+      <button onclick="openFormTambah()" id="nav-form-menu"
+        class="nav-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 whitespace-nowrap text-slate-600 hover:bg-slate-50 hover:text-slate-950">
+        <i data-lucide="plus-circle" class="w-5 h-5"></i>
+        <span>Tambah Menu</span>
+      </button>
+
+      <div class="hidden md:block border-t border-slate-100 my-4"></div>
+      <div class="hidden md:block px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+        Interaksi & Operasional
+      </div>
+
+      <button onclick="switchTab('orders')" id="nav-orders"
+        class="nav-btn flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 whitespace-nowrap text-slate-600 hover:bg-slate-50 hover:text-slate-950">
+        <div class="flex items-center gap-3">
+          <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+          <span>Pesanan Masuk</span>
+        </div>
+        <span id="badge-sidebar-count"
+          class="bg-rose-500 text-white text-xs px-2 py-0.5 rounded-full font-bold hidden">0</span>
+      </button>
+
+      <button onclick="switchTab('qr-generator')" id="nav-qr-generator"
+        class="nav-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 whitespace-nowrap text-slate-600 hover:bg-slate-50 hover:text-slate-950">
+        <i data-lucide="qr-code" class="w-5 h-5"></i>
+        <span>Cetak QR Meja</span>
+      </button>
+
+      <button onclick="switchTab('preview-digital')" id="nav-preview-digital"
+        class="nav-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 whitespace-nowrap text-slate-600 hover:bg-slate-50 hover:text-slate-950">
+        <i data-lucide="smartphone" class="w-5 h-5"></i>
+        <span>Operasional Cafe</span>
+      </button>
+    </nav>
+
+    <!-- AREA KONTEN UTAMA -->
+    <main class="flex-1 p-4 md:p-8 overflow-y-auto">
+
+      <!-- ========================================================== -->
+      <!-- TAB 1: DASHBOARD -->
+      <!-- ========================================================== -->
+      <section id="panel-dashboard" class="tab-panel space-y-8 animate-fade-in">
+        <!-- Welcome Banner -->
+        <div
+          class="bg-gradient-to-r from-slate-900 via-amber-950 to-slate-900 text-white rounded-2xl p-6 md:p-8 relative overflow-hidden shadow-xl">
+          <div
+            class="absolute right-0 top-0 w-1/3 h-full opacity-10 flex items-center justify-center pointer-events-none">
+            <i data-lucide="coffee" class="w-64 h-64 -rotate-12"></i>
+          </div>
+          <div class="relative z-10 max-w-xl">
+            <span class="bg-amber-500 text-amber-950 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+              Pemantauan Bisnis Aktif
+            </span>
+            <p class="text-slate-300 text-sm mt-2 leading-relaxed">
+              Kelola penawaran menu, pantau pesanan digital secara langsung, cetak kartu QR meja fisik, dan analisis
+              penjualan harian.
+            </p>
+            <div class="flex flex-wrap gap-3 mt-6">
+              <button onclick="openFormTambah()"
+                class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-amber-500/20 transition duration-150 flex items-center gap-2">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                Tambah Menu Baru
+              </button>
+              <button onclick="switchTab('preview-digital')"
+                class="bg-white/10 hover:bg-white/20 border border-white/15 px-5 py-2.5 rounded-xl text-sm font-bold transition duration-150 flex items-center gap-2">
+                <i data-lucide="smartphone" class="w-4 h-4"></i>
+                Operasional Cafe
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kartu Metrik Bisnis -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex items-center gap-4">
+            <div class="bg-indigo-50 text-indigo-600 p-3 rounded-lg">
+              <i data-lucide="utensils" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Menu</p>
+              <h3 class="text-2xl font-black text-slate-800" id="stat-total-menu">0</h3>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex items-center gap-4">
+            <div class="bg-emerald-50 text-emerald-600 p-3 rounded-lg">
+              <i data-lucide="check-circle" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tersedia</p>
+              <h3 class="text-2xl font-black text-emerald-600" id="stat-tersedia-menu">0</h3>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex items-center gap-4">
+            <div class="bg-rose-50 text-rose-600 p-3 rounded-lg">
+              <i data-lucide="x-circle" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Habis</p>
+              <h3 class="text-2xl font-black text-rose-600" id="stat-kosong-menu">0</h3>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex items-center gap-4">
+            <div class="bg-amber-50 text-amber-600 p-3 rounded-lg">
+              <i data-lucide="dollar-sign" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Rata-rata Harga</p>
+              <h3 class="text-lg font-black text-slate-800" id="stat-avg-price">Rp 0</h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analitis Kategori & Menu Favorit -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Grafik Proporsi Kategori -->
+          <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-xs lg:col-span-2 space-y-4">
+            <div class="flex justify-between items-center">
+              <div>
+                <h4 class="font-bold text-slate-900">Distribusi Kategori Produk</h4>
+                <p class="text-xs text-slate-500">Persentase jumlah item menu berdasarkan kategorinya</p>
+              </div>
+              <i data-lucide="layers" class="w-5 h-5 text-slate-400"></i>
+            </div>
+
+            <div class="space-y-4 pt-2" id="category-distribution-container">
+              <!-- JS akan menyuntikkan progres bar distribusi di sini -->
+            </div>
+          </div>
+
+          <!-- Menu Terlaris (Bintang Utama) -->
+          <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-xs flex flex-col justify-between">
+            <div class="space-y-4">
+              <div class="flex justify-between items-center">
+                <h4 class="font-bold text-slate-900">Hidangan Terlaris</h4>
+                <i data-lucide="sparkles" class="w-5 h-5 text-amber-500 animate-pulse"></i>
+              </div>
+
+              <div id="favorite-menu-container">
+                <!-- JS akan menyuntikkan menu terlaris secara dinamis -->
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 text-xs text-slate-500 flex items-center gap-1.5 mt-4">
+              <i data-lucide="trending-up" class="w-4 h-4 text-emerald-500"></i>
+              <span>Otomatis terupdate dari pesanan</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panduan Operasional -->
+        <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-xs">
+          <h4 class="font-bold text-slate-900 mb-4">Cara Memulai Sistem QR Coffee Senja</h4>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="flex gap-4">
+              <div
+                class="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                1</div>
+              <div>
+                <h5 class="font-semibold text-slate-800 text-sm">Tambahkan Menu Baru</h5>
+                <p class="text-xs text-slate-500 mt-1">Masukkan rincian menu, harga, deskripsi menarik, kategori, dan
+                  pilih emoji unik yang menggugah selera.</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div
+                class="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                2</div>
+              <div>
+                <h5 class="font-semibold text-slate-800 text-sm">Cetak Standee Meja</h5>
+                <p class="text-xs text-slate-500 mt-1">Buka tab "Cetak QR Meja", tentukan nomor meja, lalu cetak untuk
+                  diletakkan di meja fisik kafe.</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div
+                class="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                3</div>
+              <div>
+                <h5 class="font-semibold text-slate-800 text-sm">Terima Pesanan Mandiri</h5>
+                <p class="text-xs text-slate-500 mt-1">Gunakan fitur "Operasional Cafe" untuk mencoba pemindaian
+                  pelanggan dan pengiriman pesanan langsung ke kasir.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================== -->
+      <!-- TAB 2: KELOLA MENU -->
+      <!-- ========================================================== -->
+      <section id="panel-list-menu" class="tab-panel space-y-6 animate-fade-in hidden">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h3 class="text-xl font-bold text-slate-900">Kelola Menu Kopi & Hidangan</h3>
+            <p class="text-xs text-slate-500">Kelola ketersediaan stok produk, edit rincian informasi, atau hapus menu.
+            </p>
+          </div>
+          <button onclick="openFormTambah()"
+            class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-md transition">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            Tambah Menu Baru
+          </button>
+        </div>
+
+        <!-- Filter & Search Panel -->
+        <div
+          class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row gap-3 items-center">
+          <div class="relative w-full md:flex-1">
+            <i data-lucide="search" class="absolute left-3 top-3.5 w-4 h-4 text-slate-400"></i>
+            <input id="search-input" type="text" placeholder="Cari nama kopi, teh, cemilan..."
+              oninput="handleSearchAndFilter()"
+              class="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500" />
+          </div>
+
+          <div class="flex gap-1 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-none"
+            id="category-filter-pills">
+            <!-- JS akan memuat kategori filter secara dinamis -->
+          </div>
+        </div>
+
+        <!-- Tabel Menu -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr
+                  class="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 font-bold uppercase tracking-wider">
+                  <th class="px-6 py-4">Nama Produk</th>
+                  <th class="px-6 py-4">Kategori</th>
+                  <th class="px-6 py-4">Harga Satuan</th>
+                  <th class="px-6 py-4">Status Stok</th>
+                  <th class="px-6 py-4 text-center">Terjual</th>
+                  <th class="px-6 py-4 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="menu-table-body" class="divide-y divide-slate-100 text-sm text-slate-700">
+                <!-- JS akan mengisi daftar baris menu di sini -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================== -->
+      <!-- TAB 3: FORM TAMBAH / EDIT MENU -->
+      <!-- ========================================================== -->
+      <section id="panel-form-menu" class="tab-panel max-w-2xl mx-auto space-y-6 animate-fade-in hidden">
+        <div>
+          <h3 id="form-title" class="text-xl font-bold text-slate-900">Tambah Menu Hidangan Baru</h3>
+          <p id="form-subtitle" class="text-xs text-slate-500">Daun menu baru akan terdistribusi instan ke seluruh kode
+            QR meja.</p>
+        </div>
+
+        <form id="menu-form" onsubmit="saveMenu(event)"
+          class="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-5">
+          <input type="hidden" id="form-menu-id">
+
+          <!-- Emoji Picker Visual -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Ikon / Simbol Visual
+              Menu</label>
+            <div class="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200"
+              id="emoji-picker-container">
+              <!-- JS mengisi daftar emoji pilihan -->
+            </div>
+            <input type="hidden" id="form-emoji" value="☕">
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Nama Hidangan -->
+            <div class="md:col-span-2">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nama Hidangan
+                *</label>
+              <input type="text" id="form-name" required placeholder="Contoh: Signature Brown Sugar Latte"
+                class="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-amber-500" />
+            </div>
+
+            <!-- Kategori -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Kategori
+                Produk</label>
+              <select id="form-category"
+                class="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-amber-500">
+                <!-- JS mengisi pilihan kategori secara dinamis -->
+              </select>
+            </div>
+
+            <!-- Harga -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Harga Jual (Rupiah)
+                *</label>
+              <input type="number" id="form-price" required placeholder="Contoh: 28000"
+                class="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-amber-500" />
+            </div>
+          </div>
+
+          <!-- Deskripsi -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Deskripsi Produk
+              *</label>
+            <textarea id="form-description" required rows="3"
+              placeholder="Contoh: Seduhan espresso robusta premium dengan krimer kelapa gurih alami dan karamel manis legit."
+              class="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-amber-500"></textarea>
+          </div>
+
+          <!-- Status Default -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Ketersediaan
+              Awal</label>
+            <div class="flex gap-4">
+              <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold">
+                <input type="radio" name="form-status" value="Tersedia" checked
+                  class="text-amber-600 focus:ring-amber-500">
+                <span class="text-emerald-700">Tersedia langsung (Aktif)</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold">
+                <input type="radio" name="form-status" value="Habis" class="text-amber-600 focus:ring-amber-500">
+                <span class="text-rose-700">Kosong Sementara</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Tombol Aksi -->
+          <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
+            <button type="button" onclick="switchTab('list-menu')"
+              class="px-5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 text-sm font-bold text-slate-600 transition">
+              Batal
+            </button>
+            <button type="submit"
+              class="px-6 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-bold transition flex items-center gap-2 shadow-sm">
+              <i data-lucide="check-circle" class="w-4 h-4"></i>
+              Simpan Menu
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- ========================================================== -->
+      <!-- TAB 4: PESANAN MASUK -->
+      <!-- ========================================================== -->
+      <section id="panel-orders" class="tab-panel space-y-6 animate-fade-in hidden">
+        <div>
+          <h3 class="text-xl font-bold text-slate-900">Pesanan Masuk (Kitchen Monitor)</h3>
+          <p class="text-xs text-slate-500">Daftar pesanan aktif dari meja pelanggan yang dipesan via Operasional Cafe.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Kolom Antrean Pesanan -->
+          <div class="lg:col-span-2 space-y-4" id="orders-list-container">
+            <!-- JS menyuntikkan pesanan aktif -->
+          </div>
+
+          <!-- Panduan Workflow Dapur -->
+          <div class="bg-slate-950 text-white p-6 rounded-2xl h-fit space-y-6 border border-slate-900 shadow-md">
+            <div>
+              <h4 class="font-bold text-amber-500 text-base flex items-center gap-2">
+                <i data-lucide="coffee" class="w-5 h-5"></i>
+                Workflow Layanan Meja
+              </h4>
+              <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                Setiap pelanggan yang memindai QR code unik di meja dapat merakit pesanan secara mandiri. Alur proses
+                dapur adalah sebagai berikut:
+              </p>
+            </div>
+
+            <div class="space-y-4 border-t border-slate-800/60 pt-4 text-xs">
+              <div class="flex items-start gap-3">
+                <span class="bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded-md font-bold shrink-0">Baru</span>
+                <p class="text-slate-300">Pesanan baru saja dikirim oleh ponsel pelanggan. Tekan tombol <strong>"Proses
+                    Pesanan"</strong> untuk memindahkannya ke antrean masak.</p>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-md font-bold shrink-0">Diproses</span>
+                <p class="text-slate-300">Pesanan sedang diracik oleh barista atau juru masak. Jika sudah siap, tekan
+                  <strong>"Antar Hidangan"</strong> untuk mengirimkannya.
+                </p>
+              </div>
+              <div class="flex items-start gap-3">
+                <span
+                  class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-md font-bold shrink-0">Selesai</span>
+                <p class="text-slate-300">Menu telah tersaji lengkap di meja pelanggan dan tagihan selesai dihitung
+                  dalam kasir digital.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================== -->
+      <!-- TAB 5: CETAK QR CODE MEJA -->
+      <!-- ========================================================== -->
+      <section id="panel-qr-generator" class="tab-panel max-w-3xl mx-auto space-y-6 animate-fade-in hidden">
+        <div>
+          <h3 class="text-xl font-bold text-slate-900">QR Code Meja Interaktif</h3>
+          <p class="text-xs text-slate-500">Cetak lembar standee dudukan meja agar pelanggan dapat memesan tanpa
+            mengantre.</p>
+        </div>
+
+        <div
+          class="bg-white p-6 rounded-xl border border-slate-200 shadow-xs grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          <!-- Pengaturan Nomor Meja -->
+          <div class="space-y-5">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Tentukan Nomor Meja
+                Fisik</label>
+              <select id="qr-table-select" onchange="updateQRStandee()" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-amber-500 font-extrabold text-slate-900">
+                <option value="Meja 01">Meja 01</option>
+                <option value="Meja 02">Meja 02</option>
+                <option value="Meja 03">Meja 03</option>
+                <option value="Meja 07">Meja 07</option>
+                <option value="Meja Bar-1">Meja Bar-1</option>
+              </select>
+            </div>
+
+            <div class="bg-amber-50 p-4 rounded-xl border border-amber-100 text-xs text-amber-900 space-y-2">
+              <p class="font-bold flex items-center gap-1">
+                <i data-lucide="info" class="w-4 h-4"></i> URL Meja:
+              </p>
+              <code class="block bg-white p-2 rounded border border-amber-200 break-all select-all font-mono"
+                id="simulated-url-code">
+                https://kopisenja.menu/?meja=03
+              </code>
+            </div>
+
+            <div class="flex gap-2">
+              <button onclick="copyTableUrl()"
+                class="flex-1 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-3 rounded-lg transition flex items-center justify-center gap-2">
+                <i data-lucide="copy" class="w-4 h-4"></i>
+                Salin Tautan Meja
+              </button>
+              <button onclick="window.print()"
+                class="flex-1 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold py-3 rounded-lg transition flex items-center justify-center gap-2">
+                <i data-lucide="printer" class="w-4 h-4"></i>
+                Cetak Standee
+              </button>
+            </div>
+          </div>
+
+          <!-- Pratinjau Standee Meja -->
+          <div class="flex justify-center" id="print-section">
+            <div
+              class="w-72 bg-gradient-to-b from-amber-600 to-amber-800 text-white p-6 rounded-2xl text-center shadow-lg border border-amber-500/30 flex flex-col items-center space-y-4">
+              <div
+                class="bg-slate-900 text-amber-500 text-2xs font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-amber-500/30">
+                Pindai & Pesan Mandiri
+              </div>
+
+              <div>
+                <h4 class="font-black text-2xl tracking-tight leading-none" id="standee-cafe-title">KOPI SENJA</h4>
+                <p class="text-3xs text-amber-200/80 font-medium tracking-wide mt-1 uppercase">Instant QR Ordering
+                  System</p>
+              </div>
+
+              <!-- Simbol QR SVG (Generik Cerdas) -->
+              <div class="bg-white p-4 rounded-2xl shadow-md inline-block">
+                <svg class="w-36 h-36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <!-- QR Squares -->
+                  <rect x="0" y="0" width="100" height="100" fill="white" rx="10" />
+                  <!-- Position Markers -->
+                  <rect x="8" y="8" width="22" height="22" rx="3" fill="#1e293b" />
+                  <rect x="13" y="13" width="12" height="12" fill="white" />
+                  <rect x="16" y="16" width="6" height="6" fill="#1e293b" />
+
+                  <rect x="70" y="8" width="22" height="22" rx="3" fill="#1e293b" />
+                  <rect x="75" y="13" width="12" height="12" fill="white" />
+                  <rect x="78" y="16" width="6" height="6" fill="#1e293b" />
+
+                  <rect x="8" y="70" width="22" height="22" rx="3" fill="#1e293b" />
+                  <rect x="13" y="75" width="12" height="12" fill="white" />
+                  <rect x="16" y="78" width="6" height="6" fill="#1e293b" />
+
+                  <!-- QR Data Pixels Mock -->
+                  <rect x="36" y="8" width="6" height="6" fill="#1e293b" rx="1" />
+                  <rect x="44" y="12" width="10" height="4" fill="#92400e" rx="1" />
+                  <rect x="58" y="8" width="6" height="12" fill="#1e293b" rx="1" />
+                  <rect x="36" y="20" width="12" height="6" fill="#1e293b" rx="1" />
+                  <rect x="52" y="22" width="12" height="6" fill="#92400e" rx="1" />
+
+                  <rect x="8" y="36" width="6" height="12" fill="#1e293b" rx="1" />
+                  <rect x="20" y="44" width="8" height="6" fill="#92400e" rx="1" />
+                  <rect x="32" y="36" width="14" height="14" fill="#1e293b" rx="2" />
+                  <rect x="52" y="36" width="12" height="12" fill="#92400e" rx="2" />
+                  <rect x="70" y="36" width="22" height="6" fill="#1e293b" rx="1" />
+                  <rect x="70" y="46" width="8" height="14" fill="#1e293b" rx="1" />
+
+                  <rect x="8" y="52" width="18" height="6" fill="#92400e" rx="1" />
+                  <rect x="52" y="52" width="12" height="6" fill="#1e293b" rx="1" />
+                  <rect x="52" y="62" width="6" height="12" fill="#92400e" rx="1" />
+
+                  <rect x="36" y="70" width="10" height="10" fill="#1e293b" rx="2" />
+                  <rect x="36" y="84" width="14" height="8" fill="#92400e" rx="1" />
+                  <rect x="70" y="70" width="14" height="14" fill="#1e293b" rx="2" />
+                  <rect x="88" y="70" width="4" height="12" fill="#92400e" rx="1" />
+                  <rect x="70" y="88" width="22" height="4" fill="#1e293b" rx="1" />
+                </svg>
+              </div>
+
+              <div>
+                <p class="text-3xs text-amber-100 font-semibold tracking-wide">SILAKAN MEMESAN DARI</p>
+                <h5 class="font-extrabold text-2xl tracking-tight text-white mt-1" id="standee-table-title">MEJA 03</h5>
+              </div>
+
+              <div
+                class="pt-2 border-t border-amber-500/40 w-full flex items-center justify-center gap-1 text-[10px] text-amber-200">
+                <i data-lucide="wifi" class="w-3 h-3"></i>
+                <span>Sambungkan ke WiFi: <strong>Kopi Senja_Guest</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================== -->
+      <!-- TAB 6: PRATINJAU MENU DIGITAL (Customer Live Frame) -->
+      <!-- ========================================================== -->
+      <section id="panel-preview-digital" class="tab-panel space-y-6 animate-fade-in hidden">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h3 class="text-xl font-bold text-slate-900">Menu Digital Pelanggan</h3>
+            <p class="text-xs text-slate-500">Coba fungsikan fitur belanja mandiri di bawah ini untuk menguji
+              pengiriman menu instan.</p>
+          </div>
+
+          <!-- Pemilihan Meja Pemesan Simulator -->
+          <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-3xs">
+            <span class="text-xs font-bold text-slate-600">Lihat Sebagai:</span>
+            <select id="simulated-table-select" onchange="updateSimulatedCustomerTable()"
+              class="bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-black">
+              <option value="Meja 01">Meja 01</option>
+              <option value="Meja 02">Meja 02</option>
+              <option value="Meja 03" selected>Meja 03</option>
+              <option value="Meja 04">Meja 04</option>
+              <option value="Meja 05">Meja 05</option>
+              <option value="Meja 06">Meja 06</option>
+              <option value="Meja 07">Meja 07</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Ponsel Frame Container -->
+        <div class="flex justify-center">
+          <div class="w-full max-w-sm bg-slate-900 rounded-[44px] p-3.5 shadow-2xl border-4 border-slate-800">
+            <!-- Speaker Ponsel & Kamera Depan -->
+            <div class="flex justify-center mb-3">
+              <div class="w-32 h-4.5 bg-slate-900 rounded-full flex justify-around items-center px-4">
+                <div class="w-2.5 h-2.5 rounded-full bg-slate-800 border border-slate-700"></div>
+                <div class="w-12 h-1 bg-slate-800 rounded-full"></div>
+              </div>
+            </div>
+
+            <!-- Layar Aplikasi Ponsel Pelanggan -->
+            <div class="bg-slate-50 rounded-[34px] overflow-hidden min-h-[580px] max-h-[620px] text-slate-800 relative">
+              <iframe id="customer-iframe" src="customer.html?meja=Meja%2003"
+                class="w-full h-[580px] rounded-[34px] border-none bg-slate-50"></iframe>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- FOOTER OPERASIONAL -->
+  <footer class="bg-white border-t border-slate-200 py-4 px-8 text-center text-slate-400 text-xs font-medium">
+    Kopi Senja SIM & QR Menu Online © <span id="footer-year">2026</span>. Dikembangkan untuk efisiensi bisnis Anda.
+  </footer>
+
+  <!-- JAVASCRIPT LOGIC UTAMA -->
+  <script>
+    // Data Default Menu Kafe & Coffee Shop
+    const defaultMenus = [
+      { id: '1', name: 'Signature Palm Sugar Latte', category: 'Espresso-Based', price: 28000, description: 'Double shot espresso blend premium arabica & robusta dengan susu murni segar dan gula aren asli.', status: 'Tersedia', sold: 184, emoji: '☕' },
+      { id: '2', name: 'Charcoal Almond Croissant', category: 'Cemilan & Pastry', price: 24000, description: 'Pastry renyah premium charcoal bermentega tinggi, bertabur kacang almond iris panggang.', status: 'Tersedia', sold: 112, emoji: '🥐' },
+      { id: '3', name: 'Japanese Matcha Crepes', category: 'Makanan Penutup', price: 22000, description: 'Mille crepes tipis berlapis krim lembut rasa teh hijau matcha Uji Jepang asli premium.', status: 'Tersedia', sold: 68, emoji: '🍰' },
+      { id: '4', name: 'Creamy Avocado Coffee', category: 'Spesial Kopi Senja', price: 32000, description: 'Espresso robusta disajikan di atas jus alpukat mentega segar kental, ditutup es krim vanilla lezat.', status: 'Tersedia', sold: 145, emoji: '🥑' },
+      { id: '5', name: 'Cold Brew Peach Tea', category: 'Non-Kopi', price: 18000, description: 'Seduhan dingin teh hitam premium dengan sari rasa buah peach segar yang manis asam seimbang.', status: 'Tersedia', sold: 98, emoji: '🍹' },
+      { id: '6', name: 'Truffle French Fries', category: 'Cemilan & Pastry', price: 16000, description: 'Kentang goreng renyah bumbu bawang gurih, disemprot minyak truffle wangi dan taburan parsley.', status: 'Habis', sold: 52, emoji: '🍟' },
+      { id: '7', name: 'Spanish Latte Macchiato', category: 'Espresso-Based', price: 30000, description: 'Perpaduan espresso arabika dengan susu kental manis lembut dan foam susu hangat tebal.', status: 'Tersedia', sold: 120, emoji: '☕' },
+      { id: '8', name: 'Kopi Pandan Kelapa', category: 'Spesial Kopi Senja', price: 29000, description: 'Espresso aromatik dengan gurihnya santan kelapa organik dan manisnya sirup pandan segar.', status: 'Tersedia', sold: 94, emoji: '🥥' },
+      { id: '9', name: 'Belgian Choco Velvet Hazelnut', category: 'Non-Kopi', price: 26000, description: 'Cokelat Belgia premium pekat dipadu dengan sirup hazelnut panggang dan topping whipped cream.', status: 'Tersedia', sold: 141, emoji: '🥤' },
+      { id: '10', name: 'Lychee Yakult Breeze', category: 'Non-Kopi', price: 21000, description: 'Teh melati wangi dingin dengan buah leci segar utuh, disiram kultur Yakult asam-manis segar.', status: 'Tersedia', sold: 204, emoji: '🍹' },
+      { id: '11', name: 'Cinnamon Roll Classic', category: 'Cemilan & Pastry', price: 22000, description: 'Adonan roti kayu manis gulung yang empuk, dilumuri dengan glaze krim keju manis meleleh.', status: 'Tersedia', sold: 87, emoji: '🍩' },
+      { id: '12', name: 'Classic Tiramisu Cup', category: 'Makanan Penutup', price: 25000, description: 'Kue ladyfinger yang direndam espresso pekat, berlapis mascarpone krim lembut melimpah.', status: 'Tersedia', sold: 73, emoji: '🍰' }
+    ];
+
+    let menus = [];
+    try {
+      const savedMenus = localStorage.getItem('menus');
+      if (savedMenus) {
+        menus = JSON.parse(savedMenus);
+      } else {
+        menus = defaultMenus;
+        localStorage.setItem('menus', JSON.stringify(menus));
+      }
+    } catch (e) {
+      console.error("Gagal memuat menus dari localStorage:", e);
+      menus = defaultMenus;
+    }
+
+    // Pilihan Kategori default
+    const categories = ['Espresso-Based', 'Non-Kopi', 'Spesial Kopi Senja', 'Cemilan & Pastry', 'Makanan Penutup'];
+    const emojis = ['☕', '🥐', '🍰', '🥑', '🍹', '🍟', '🍳', '🍩', '🍮', '🍔', '🥥', '🥤', '🥞', '🍞', '🍨', '🍿', '☕︎', '🥪', '🍵'];
+
+    // State Pesanan Dapur Default
+    const defaultOrders = [
+      { id: 'ORD-512', table: 'Meja 01', items: [{ name: 'Creamy Avocado Coffee', qty: 2 }, { name: 'Charcoal Almond Croissant', qty: 1 }], total: 88000, status: 'Baru', time: '5 menit lalu', paymentMethod: 'Kasir', paymentStatus: 'Belum Lunas' },
+      { id: 'ORD-492', table: 'Meja 03', items: [{ name: 'Signature Palm Sugar Latte', qty: 1 }, { name: 'Cold Brew Peach Tea', qty: 1 }], total: 46000, status: 'Diproses', time: '14 menit lalu', paymentMethod: 'QRIS', paymentStatus: 'Lunas' }
+    ];
+
+    let orders = [];
+    try {
+      const savedOrders = localStorage.getItem('orders');
+      if (savedOrders) {
+        orders = JSON.parse(savedOrders);
+      } else {
+        orders = defaultOrders;
+        localStorage.setItem('orders', JSON.stringify(orders));
+      }
+    } catch (e) {
+      console.error("Gagal memuat orders dari localStorage:", e);
+      orders = defaultOrders;
+    }
+
+    // State Aplikasi
+    let currentTab = 'dashboard';
+    let currentFilter = 'Semua';
+    let searchQuery = '';
+    let customerCart = {}; // menuId -> { menu, qty }
+    let customerSelectedCategory = 'Semua';
+    let selectedPaymentMethod = 'Kasir';
+    let qrisInterval = null;
+
+    // Helper functions to save to localStorage
+    function saveMenusToStorage() {
+      try {
+        localStorage.setItem('menus', JSON.stringify(menus));
+      } catch (e) {
+        console.error("Gagal menyimpan menus ke localStorage:", e);
+      }
+    }
+
+    function saveOrdersToStorage() {
+      try {
+        localStorage.setItem('orders', JSON.stringify(orders));
+      } catch (e) {
+        console.error("Gagal menyimpan orders ke localStorage:", e);
+      }
+    }
+
+    // Mengirim pesan pembaruan data ke customer simulator iframe
+    function updateCustomerIframe() {
+      const iframe = document.getElementById('customer-iframe');
+      if (iframe && iframe.contentWindow) {
+        const activeTable = document.getElementById('simulated-table-select').value;
+        iframe.contentWindow.postMessage({
+          type: 'UPDATE_DATA',
+          menus: menus,
+          categories: categories,
+          table: activeTable
+        }, '*');
+      }
+    }
+
+    // Inisialisasi Aplikasi Saat Memuat Halaman
+    window.onload = function () {
+      // Set tahun footer
+      document.getElementById('footer-year').innerText = new Date().getFullYear();
+
+      // Dengarkan komunikasi postMessage dari iframe simulator
+      window.addEventListener('message', function (event) {
+        const payload = event.data;
+        if (payload) {
+          if (payload.type === 'CUSTOMER_READY') {
+            updateCustomerIframe();
+          } else if (payload.type === 'NEW_ORDER') {
+            const newOrder = payload.order;
+            // Hindari duplikasi jika pesanan sudah masuk via localStorage
+            if (!orders.some(o => o.id === newOrder.id)) {
+              orders.unshift(newOrder);
+              saveOrdersToStorage();
+              showNotification(`Pesanan baru masuk dari ${newOrder.table}!`);
+              renderAll();
+            }
+          }
+        }
+      });
+
+      // Sinkronisasi otomatis lintas-tab jika ada perubahan di localStorage
+      window.addEventListener('storage', function (event) {
+        if (event.key === 'menus' && event.newValue) {
+          menus = JSON.parse(event.newValue);
+          renderAll();
+        } else if (event.key === 'orders' && event.newValue) {
+          const incomingOrders = JSON.parse(event.newValue);
+          // Tampilkan notifikasi jika ada pesanan baru ditambahkan
+          if (incomingOrders.length > orders.length) {
+            const newOrder = incomingOrders[0];
+            showNotification(`Pesanan baru masuk dari ${newOrder.table}!`);
+          }
+          orders = incomingOrders;
+          renderAll();
+        }
+      });
+
+      // Render semua antarmuka
+      renderAll();
+    };
+
+    // Render Utama untuk Segala Pembaruan State
+    function renderAll() {
+      renderStats();
+      renderCategoryDistribution();
+      renderFavoriteMenu();
+      renderMenuList();
+      renderCategoryFilters();
+      renderEmojiPicker();
+      renderCategoryFormDropdown();
+      renderOrders();
+      updateQRStandee();
+
+      // Inisialisasi ulang semua ikon Lucide agar tampil sempurna
+      lucide.createIcons();
+    }
+
+    // ==========================================================
+    // LOGIC TAB 5: QR GENERATOR
+    // ==========================================================
+    function updateQRStandee() {
+      // Prefer select value if present, otherwise fall back to old input
+      const select = document.getElementById('qr-table-select');
+      const input = document.getElementById('qr-table-input');
+      let numMeja = '--';
+      if (select) numMeja = select.value || '--';
+      else if (input) numMeja = input.value.trim() || '--';
+
+      const tableTitle = document.getElementById('standee-table-title');
+      const urlCode = document.getElementById('simulated-url-code');
+
+      const displayMeja = (typeof numMeja === 'string' && numMeja.toUpperCase().startsWith('MEJA')) ? numMeja.toUpperCase() : `MEJA ${String(numMeja).toUpperCase()}`;
+
+      if (tableTitle) tableTitle.innerText = displayMeja;
+      if (urlCode) urlCode.innerText = `customer.html?meja=${encodeURIComponent(numMeja)}`;
+    }
+
+    // ==========================================================
+    // LOGIC TAB 6: SIMULATOR PELANGGAN
+    // ==========================================================
+    // Ganti meja pada iframe simulator ketika dropdown berubah
+    function updateSimulatedCustomerTable() {
+      const select = document.getElementById('simulated-table-select');
+      if (!select) return;
+      const selectedTable = select.value;
+
+      const iframe = document.getElementById('customer-iframe');
+      if (!iframe) return;
+
+      // Cara terpercaya: reload iframe dengan URL baru berisi nomor meja yang dipilih
+      iframe.src = `customer.html?meja=${encodeURIComponent(selectedTable)}`;
+
+      // Setelah iframe selesai load, kirim UPDATE_DATA supaya menu juga diperbarui
+      iframe.onload = function () {
+        setTimeout(() => {
+          if (iframe.contentWindow) {
+            iframe.contentWindow.postMessage({
+              type: 'UPDATE_DATA',
+              menus: menus,
+              categories: categories,
+              table: selectedTable
+            }, '*');
+          }
+        }, 100);
+      };
+    }
+
+    // Ganti Tab Utama
+    function switchTab(tabId) {
+      currentTab = tabId;
+
+      // Toggle Sembunyikan/Tampilkan Panel Tab
+      document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.classList.add('hidden');
+      });
+      document.getElementById(`panel-${tabId}`).classList.remove('hidden');
+
+      // Update Gaya Tombol Navigasi Sidebar
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-amber-50', 'text-amber-800', 'shadow-xs');
+        btn.classList.add('text-slate-600');
+      });
+      const activeNav = document.getElementById(`nav-${tabId}`);
+      if (activeNav) {
+        activeNav.classList.add('bg-amber-50', 'text-amber-800', 'shadow-xs');
+        activeNav.classList.remove('text-slate-600');
+      }
+
+      // Khusus perpindahan, render ulang tab terkait
+      if (tabId === 'dashboard') {
+        renderStats();
+        renderCategoryDistribution();
+        renderFavoriteMenu();
+      } else if (tabId === 'list-menu') {
+        renderMenuList();
+      } else if (tabId === 'orders') {
+        renderOrders();
+      } else if (tabId === 'preview-digital') {
+        // Kirim data menu terkini ke iframe simulator pelanggan
+        updateCustomerIframe();
+      }
+
+      lucide.createIcons();
+    }
+
+    // Menampilkan Notifikasi Custom (Toast)
+    function showNotification(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const toastBg = document.getElementById('toast-bg');
+      const toastIconBox = document.getElementById('toast-icon-box');
+      const toastText = document.getElementById('toast-text');
+
+      // Bersihkan kelas lama
+      toastBg.className = "flex items-center gap-3 px-5 py-3 rounded-xl shadow-xl border bg-white ";
+
+      if (type === 'success') {
+        toastBg.classList.add('border-emerald-200', 'bg-emerald-50', 'text-emerald-800');
+        toastIconBox.className = "p-1 rounded-full bg-emerald-500 text-white";
+        toastIconBox.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i>`;
+      } else if (type === 'warning') {
+        toastBg.classList.add('border-amber-200', 'bg-amber-50', 'text-amber-800');
+        toastIconBox.className = "p-1 rounded-full bg-amber-500 text-slate-950";
+        toastIconBox.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4"></i>`;
+      } else {
+        toastBg.classList.add('border-rose-200', 'bg-rose-50', 'text-rose-800');
+        toastIconBox.className = "p-1 rounded-full bg-rose-500 text-white";
+        toastIconBox.innerHTML = `<i data-lucide="x" class="w-4 h-4"></i>`;
+      }
+
+      toastText.innerText = message;
+      lucide.createIcons();
+
+      // Animasi masuk
+      toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-[-20px]');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      // Sembunyikan setelah 3.5 detik
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-[-20px]');
+      }, 3500);
+    }
+
+    // ==========================================================
+    // LOGIC TAB 1: DASHBOARD STATS
+    // ==========================================================
+    function renderStats() {
+      const total = menus.length;
+      const tersedia = menus.filter(m => m.status === 'Tersedia').length;
+      const kosong = total - tersedia;
+
+      const totalHarga = menus.reduce((acc, m) => acc + m.price, 0);
+      const avgHarga = total > 0 ? Math.round(totalHarga / total) : 0;
+
+      document.getElementById('stat-total-menu').innerText = `${total} Menu`;
+      document.getElementById('stat-tersedia-menu').innerText = `${tersedia} Item`;
+      document.getElementById('stat-kosong-menu').innerText = `${kosong} Item`;
+      document.getElementById('stat-avg-price').innerText = `Rp ${avgHarga.toLocaleString('id-ID')}`;
+    }
+
+    function renderCategoryDistribution() {
+      const container = document.getElementById('category-distribution-container');
+      container.innerHTML = '';
+
+      categories.forEach(cat => {
+        const count = menus.filter(m => m.category === cat).length;
+        const total = menus.length;
+        const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+
+        container.innerHTML += `
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold text-slate-700">
+              <span>${cat}</span>
+              <span>${count} Produk (${percentage}%)</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2.5">
+              <div class="bg-amber-600 h-2.5 rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // Cari produk terjual terbanyak
+    function renderFavoriteMenu() {
+      const container = document.getElementById('favorite-menu-container');
+      const sorted = [...menus].sort((a, b) => b.sold - a.sold);
+      const topMenu = sorted[0];
+
+      if (topMenu && topMenu.sold > 0) {
+        container.innerHTML = `
+          <div class="bg-amber-50/70 rounded-2xl p-4 border border-amber-100 text-center space-y-2">
+            <span class="text-4xl block">${topMenu.emoji}</span>
+            <h5 class="font-bold text-slate-900 text-sm">${topMenu.name}</h5>
+            <p class="text-3xs text-slate-400 uppercase tracking-widest font-semibold">${topMenu.category}</p>
+            <div class="inline-block bg-slate-950 text-amber-500 text-2xs font-extrabold px-3 py-1 rounded-full shadow-xs">
+              Terjual: ${topMenu.sold} Porsi
+            </div>
+          </div>
+        `;
+      } else {
+        container.innerHTML = `
+          <div class="text-center py-6 text-slate-400 italic text-xs">
+            Belum ada pesanan masuk untuk mencatat data terlaris.
+          </div>
+        `;
+      }
+    }
+
+    // ==========================================================
+    // LOGIC TAB 2: KELOLA MENU
+    // ==========================================================
+    function renderCategoryFilters() {
+      const pillsContainer = document.getElementById('category-filter-pills');
+      pillsContainer.innerHTML = '';
+
+      // Tambahkan filter "Semua"
+      const activeSemuaClass = currentFilter === 'Semua' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200';
+      pillsContainer.innerHTML += `
+        <button onclick="setMenuFilter('Semua')" class="px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition duration-200 ${activeSemuaClass}">
+          Semua (${menus.length})
+        </button>
+      `;
+
+      categories.forEach(cat => {
+        const count = menus.filter(m => m.category === cat).length;
+        const activeClass = currentFilter === cat ? 'bg-amber-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200';
+        pillsContainer.innerHTML += `
+          <button onclick="setMenuFilter('${cat}')" class="px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition duration-200 ${activeClass}">
+            ${cat} (${count})
+          </button>
+        `;
+      });
+    }
+
+    function setMenuFilter(filter) {
+      currentFilter = filter;
+      renderCategoryFilters();
+      renderMenuList();
+    }
+
+    function handleSearchAndFilter() {
+      searchQuery = document.getElementById('search-input').value.toLowerCase();
+      renderMenuList();
+    }
+
+    function renderMenuList() {
+      const tbody = document.getElementById('menu-table-body');
+      tbody.innerHTML = '';
+
+      // Saring daftar menu
+      const filtered = menus.filter(m => {
+        const matchesSearch = m.name.toLowerCase().includes(searchQuery) || m.description.toLowerCase().includes(searchQuery);
+        const matchesCategory = currentFilter === 'Semua' || m.category === currentFilter;
+        return matchesSearch && matchesCategory;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colSpan="6" class="px-6 py-12 text-center text-slate-400 italic text-xs">
+              Belum ada item hidangan kopi atau snack yang cocok dengan kriteria pencarian Anda.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      filtered.forEach(menu => {
+        const statusBadge = menu.status === 'Tersedia'
+          ? `<button onclick="toggleMenuStatus('${menu.id}')" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Tersedia
+             </button>`
+          : `<button onclick="toggleMenuStatus('${menu.id}')" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 transition">
+              <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Habis
+             </button>`;
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50/50 transition">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <span class="text-3xl p-1 bg-slate-100 rounded-lg shrink-0">${menu.emoji}</span>
+                <div>
+                  <h5 class="font-semibold text-slate-900">${menu.name}</h5>
+                  <p class="text-xs text-slate-500 max-w-xs truncate mt-0.5" title="${menu.description}">${menu.description}</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <span class="bg-slate-100 text-slate-600 text-2xs font-bold px-2.5 py-1 rounded-md">
+                ${menu.category}
+              </span>
+            </td>
+            <td class="px-6 py-4 font-extrabold text-slate-900">
+              Rp ${menu.price.toLocaleString('id-ID')}
+            </td>
+            <td class="px-6 py-4">
+              ${statusBadge}
+            </td>
+            <td class="px-6 py-4 text-center font-bold text-slate-500">
+              ${menu.sold} porsi
+            </td>
+            <td class="px-6 py-4 text-right">
+              <div class="flex justify-end gap-1.5">
+                <button onclick="editMenu('${menu.id}')" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Edit Produk">
+                  <i data-lucide="edit" class="w-4 h-4"></i>
+                </button>
+                <button onclick="deleteMenu('${menu.id}')" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Hapus Produk">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      lucide.createIcons();
+    }
+
+    function toggleMenuStatus(id) {
+      const menu = menus.find(m => m.id === id);
+      if (menu) {
+        menu.status = menu.status === 'Tersedia' ? 'Habis' : 'Tersedia';
+        showNotification(`Status hidangan "${menu.name}" diubah menjadi ${menu.status}.`);
+        saveMenusToStorage();
+        updateCustomerIframe();
+        renderAll();
+      }
+    }
+
+    function deleteMenu(id) {
+      const menuIndex = menus.findIndex(m => m.id === id);
+      if (menuIndex > -1) {
+        const menuName = menus[menuIndex].name;
+        menus.splice(menuIndex, 1);
+        showNotification(`Menu "${menuName}" berhasil dihapus dari sistem!`, 'warning');
+        saveMenusToStorage();
+        updateCustomerIframe();
+        renderAll();
+      }
+    }
+
+    // ==========================================================
+    // LOGIC TAB 3: FORM ADD / EDIT
+    // ==========================================================
+    function renderEmojiPicker() {
+      const container = document.getElementById('emoji-picker-container');
+      container.innerHTML = '';
+
+      const activeEmoji = document.getElementById('form-emoji').value;
+
+      emojis.forEach(em => {
+        const activeClass = activeEmoji === em ? 'bg-amber-500 scale-110 shadow-xs' : 'bg-white hover:bg-slate-100';
+        container.innerHTML += `
+          <button type="button" onclick="selectFormEmoji('${em}')" class="text-2xl p-2 rounded-xl border border-slate-200/60 transition-transform duration-150 hover:scale-105 ${activeClass}">
+            ${em}
+          </button>
+        `;
+      });
+    }
+
+    function selectFormEmoji(em) {
+      document.getElementById('form-emoji').value = em;
+      renderEmojiPicker();
+    }
+
+    function renderCategoryFormDropdown() {
+      const select = document.getElementById('form-category');
+      select.innerHTML = '';
+      categories.forEach(cat => {
+        select.innerHTML += `<option value="${cat}">${cat}</option>`;
+      });
+    }
+
+    function openFormTambah() {
+      // Atur Judul Form Tambah
+      document.getElementById('form-title').innerText = 'Daftarkan Menu Hidangan Baru';
+      document.getElementById('form-subtitle').innerText = 'Data menu baru akan terdistribusi instan ke seluruh kode QR meja.';
+
+      // Reset isian form
+      document.getElementById('form-menu-id').value = '';
+      document.getElementById('form-name').value = '';
+      document.getElementById('form-price').value = '';
+      document.getElementById('form-description').value = '';
+      document.getElementById('form-emoji').value = '☕';
+      document.getElementById('form-category').selectedIndex = 0;
+
+      // Atur radio status ke 'Tersedia'
+      document.querySelector('input[name="form-status"][value="Tersedia"]').checked = true;
+
+      renderEmojiPicker();
+      switchTab('form-menu');
+    }
+
+    function editMenu(id) {
+      const menu = menus.find(m => m.id === id);
+      if (!menu) return;
+
+      // Atur Judul Form Edit
+      document.getElementById('form-title').innerText = 'Edit Informasi Menu';
+      document.getElementById('form-subtitle').innerText = 'Sesuaikan perubahan rincian produk lama Anda di bawah.';
+
+      document.getElementById('form-menu-id').value = menu.id;
+      document.getElementById('form-name').value = menu.name;
+      document.getElementById('form-price').value = menu.price;
+      document.getElementById('form-description').value = menu.description;
+      document.getElementById('form-emoji').value = menu.emoji;
+      document.getElementById('form-category').value = menu.category;
+
+      // Atur radio status
+      document.querySelector(`input[name="form-status"][value="${menu.status}"]`).checked = true;
+
+      renderEmojiPicker();
+      switchTab('form-menu');
+    }
+
+    function saveMenu(event) {
+      event.preventDefault();
+
+      const id = document.getElementById('form-menu-id').value;
+      const name = document.getElementById('form-name').value.trim();
+      const price = parseFloat(document.getElementById('form-price').value);
+      const category = document.getElementById('form-category').value;
+      const description = document.getElementById('form-description').value.trim();
+      const emoji = document.getElementById('form-emoji').value;
+      const status = document.querySelector('input[name="form-status"]:checked').value;
+
+      if (!name || isNaN(price) || price <= 0 || !description) {
+        showNotification('Mohon lengkapi seluruh isian formulir dengan benar!', 'error');
+        return;
+      }
+
+      if (id) {
+        // Mode Penyuntingan Menu (Edit)
+        const existingIndex = menus.findIndex(m => m.id === id);
+        if (existingIndex > -1) {
+          menus[existingIndex] = {
+            ...menus[existingIndex],
+            name, price, category, description, emoji, status
+          };
+          showNotification(`Perubahan hidangan "${name}" disimpan!`);
+        }
+      } else {
+        // Mode Penambahan Menu Baru (Add)
+        const newMenu = {
+          id: Date.now().toString(),
+          name, price, category, description, emoji, status,
+          sold: 0
+        };
+        menus.unshift(newMenu);
+        showNotification(`Hidangan baru "${name}" berhasil diluncurkan!`);
+      }
+
+      saveMenusToStorage();
+      updateCustomerIframe();
+
+      // Kembali ke tab kelola menu
+      switchTab('list-menu');
+    }
+
+    // ==========================================================
+    // LOGIC TAB 4: PESANAN MASUK & WORKFLOW DAPUR
+    // ==========================================================
+    function renderOrders() {
+      const container = document.getElementById('orders-list-container');
+      container.innerHTML = '';
+
+      const activeOrders = orders.filter(o => o.status !== 'Selesai');
+
+      // Update badge di header dan sidebar
+      const incomingCount = orders.filter(o => o.status === 'Baru').length;
+      const badgeNotif = document.getElementById('btn-notif-orders');
+      const badgeCount = document.getElementById('badge-notif-count');
+      const sidebarCount = document.getElementById('badge-sidebar-count');
+
+      if (incomingCount > 0) {
+        badgeNotif.classList.remove('hidden');
+        badgeCount.innerText = incomingCount;
+        sidebarCount.innerText = incomingCount;
+        sidebarCount.classList.remove('hidden');
+      } else {
+        badgeNotif.classList.add('hidden');
+        sidebarCount.classList.add('hidden');
+      }
+
+      if (activeOrders.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white p-8 rounded-xl border border-dashed border-slate-300 text-center text-slate-400">
+            <i data-lucide="shopping-bag" class="w-12 h-12 mx-auto text-slate-300 mb-2"></i>
+            <p class="text-sm font-semibold">Belum Ada Antrean Masak Hari Ini</p>
+            <p class="text-xs text-slate-400 mt-1">Lakukan pengiriman pesanan pada tab "Pratinjau Menu HP".</p>
+          </div>
+        `;
+        return;
+      }
+
+      activeOrders.forEach(order => {
+        let borderClass = 'border-slate-200';
+        let statusBadgeClass = '';
+        let actionBtn = '';
+
+        if (order.status === 'Baru') {
+          borderClass = 'border-rose-300 ring-4 ring-rose-500/10 animate-pulse';
+          statusBadgeClass = 'bg-rose-100 text-rose-700';
+          actionBtn = `<button onclick="updateOrderStatus('${order.id}', 'Diproses')" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition shadow-xs">Terima & Masak</button>`;
+        } else if (order.status === 'Diproses') {
+          borderClass = 'border-amber-300 ring-4 ring-amber-500/5';
+          statusBadgeClass = 'bg-amber-100 text-amber-700';
+          actionBtn = `<button onclick="updateOrderStatus('${order.id}', 'Diantar')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition shadow-xs">Antar Hidangan</button>`;
+        } else if (order.status === 'Diantar') {
+          borderClass = 'border-sky-300';
+          statusBadgeClass = 'bg-sky-100 text-sky-700';
+          actionBtn = `<button onclick="updateOrderStatus('${order.id}', 'Selesai')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition shadow-xs">Selesaikan Transaksi</button>`;
+        }
+
+        // Susun item dipesan
+        let itemsHtml = '';
+        order.items.forEach(it => {
+          itemsHtml += `
+            <div class="flex justify-between py-1.5 text-xs font-semibold text-slate-700">
+              <span>${it.name}</span>
+              <span class="text-slate-900 font-extrabold">x${it.qty}</span>
+            </div>
+          `;
+        });
+
+        // Kode Badge Metode Pembayaran & Status
+        let paymentBadge = '';
+        if (order.paymentMethod === 'QRIS') {
+          paymentBadge = `
+            <div class="flex items-center gap-1.5 mt-1.5">
+              <span class="bg-indigo-50 text-indigo-700 text-[10px] font-extrabold px-2 py-0.5 rounded border border-indigo-100">QRIS</span>
+              <span class="bg-emerald-50 text-emerald-700 text-[10px] font-extrabold px-2 py-0.5 rounded border border-emerald-100 flex items-center gap-0.5">
+                <i data-lucide="check" class="w-3 h-3"></i> Lunas
+              </span>
+            </div>
+          `;
+        } else {
+          const isLunas = order.paymentStatus === 'Lunas';
+          paymentBadge = `
+            <div class="flex items-center gap-1.5 mt-1.5">
+              <span class="bg-slate-100 text-slate-600 text-[10px] font-extrabold px-2 py-0.5 rounded border border-slate-200">Kasir</span>
+              <span class="${isLunas ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100'} text-[10px] font-extrabold px-2 py-0.5 rounded border flex items-center gap-0.5">
+                ${isLunas ? '<i data-lucide="check" class="w-3 h-3"></i> Lunas' : '<i data-lucide="alert-circle" class="w-3 h-3"></i> Belum Lunas'}
+              </span>
+            </div>
+          `;
+        }
+
+        container.innerHTML += `
+          <div class="bg-white p-5 rounded-xl border ${borderClass} space-y-4 transition">
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-black text-slate-900 text-base">${order.id}</span>
+                  <span class="text-xs font-bold bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-md">${order.table}</span>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
+                  <i data-lucide="clock" class="w-3.5 h-3.5"></i> ${order.time}
+                </p>
+                ${paymentBadge}
+              </div>
+
+              <span class="text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider ${statusBadgeClass}">
+                ${order.status}
+              </span>
+            </div>
+
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 divide-y divide-slate-100">
+              ${itemsHtml}
+            </div>
+
+            <div class="flex justify-between items-center pt-2">
+              <div>
+                <span class="text-2xs text-slate-400 block uppercase font-bold tracking-wider">Total Pembayaran</span>
+                <span class="font-extrabold text-slate-900 text-base">Rp ${order.total.toLocaleString('id-ID')}</span>
+              </div>
+              <div>
+                ${actionBtn}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      lucide.createIcons();
+    }
+
+    function updateOrderStatus(id, newStatus) {
+      const order = orders.find(o => o.id === id);
+      if (order) {
+        order.status = newStatus;
+
+        if (newStatus === 'Selesai') {
+          // Tambahkan statistik terjual pada hidangan menu
+          order.items.forEach(orderItem => {
+            const m = menus.find(menu => menu.name === orderItem.name);
+            if (m) m.sold += orderItem.qty;
+          });
+          order.paymentStatus = 'Lunas'; // Set lunas otomatis saat transaksi diselesaikan
+          showNotification(`Pesanan ${id} dinyatakan selesai & pembayaran tuntas!`);
+          saveMenusToStorage();
+          updateCustomerIframe();
+        } else {
+          showNotification(`Status pesanan ${id} kini berubah menjadi: ${newStatus}`);
+        }
+
+        saveOrdersToStorage();
+        renderAll();
+      }
+    }
+
+    // ==========================================================
+    // LOGIC TAB 5: QR GENERATOR
+    // ==========================================================
+    function updateQRStandee() {
+      const select = document.getElementById('qr-table-select');
+      const input = document.getElementById('qr-table-input');
+      let numMeja = '--';
+      if (select) numMeja = select.value || '--';
+      else if (input) numMeja = input.value.trim() || '--';
+
+      // Update tulisan standee meja
+      const displayMeja = (typeof numMeja === 'string' && numMeja.toUpperCase().startsWith('MEJA')) ? numMeja.toUpperCase() : `MEJA ${String(numMeja).toUpperCase()}`;
+      document.getElementById('standee-table-title').innerText = displayMeja;
+      document.getElementById('simulated-url-code').innerText = `https://kopisenja.menu/?meja=${encodeURIComponent(numMeja)}`;
+    }
+
+    function copyTableUrl() {
+      const codeUrl = document.getElementById('simulated-url-code').innerText;
+
+      // Copy manual cross-browser compat
+      const dummyInput = document.createElement('input');
+      dummyInput.value = codeUrl;
+      document.body.appendChild(dummyInput);
+      dummyInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(dummyInput);
+
+      showNotification('Tautan meja unik disalin ke clipboard!');
+    }
+
+    // Fungsi copyTableUrl: salin URL meja ke clipboard
+    function copyTableUrl() {
+      const codeUrl = document.getElementById('simulated-url-code').innerText;
+      const dummyInput = document.createElement('input');
+      dummyInput.value = codeUrl;
+      document.body.appendChild(dummyInput);
+      dummyInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(dummyInput);
+      showNotification('Tautan meja unik disalin ke clipboard!');
+    }
+  </script>
+</body>
+
+</html>
